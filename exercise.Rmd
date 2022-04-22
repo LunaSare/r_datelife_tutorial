@@ -1,0 +1,75 @@
+---
+title: "exercise.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+DateLife to-go exercise
+
+Instructions:
+
+1) Search DateLife's chronogram database to get *ages* for your taxa. To do this, run the function `datelife::get_datelife_result` on your processed list of taxon names (that is, your `my_query` object), assign the output to a named object. I named mine `ages`. 
+2) Summarize the ages as individual study chronograms. Most of the time, published chronograms have other tips that are not part of your taxa of interest.  To get just the parts of study chronograms that you are interested in, use the  function `datelife::summarize_datelife_result` on the output of the previous step. Make sure to use the argument `summary_format = "phylo_all"`. Assign the output to a different object. I named mine `my_chronograms`.
+3) install the package datelifeplot using the function `devtools::install_github("phylotastic/datelifeplot")`.
+4) plot your study chronograms with `datelifeplot::plot_phylo_all`. Use option `write = "pdf"` to save your study chronograms as a pdf. They will be saved in a folder named "phylo_all".
+5) Choose a tree topology to date. You can choose any of the chronograms in `my_chronograms`. You can use the chronogram with the most number of tips. To get that onem use the function `datelife::get_biggest_multiphylo`.
+Alternatively (the recommended option) is to get a synthetic topology from Open Tree for your taxa. To get this one, use function `datelife::get_otol_synthetic_tree` using `my_query` as input.
+6) Add the topology of your choosing to your `my_query` object. Do this with the following command:
+`my_query$phy <- my_topology`,
+6) Use the age data to date the tree topology that you chose. Use the function `datelife::datelife_use_datelifequery`
+
+
+\newpage
+
+My solution:
+
+
+```{r, eval = FALSE}
+# search DateLife's chronogram database for your taxa
+ages <- datelife::get_datelife_result(input = my_query)
+
+# check the structure of the output of datelife::get_datelife_result
+names(ages)
+str(ages)
+
+# transform matrices back to phylogenetic trees
+my_chronograms <- datelife::summarize_datelife_result(datelife_result = ages, 
+                                                  datelife_query = my_query, 
+                                                  summary_format = "phylo_all")
+
+# get citations of studies that published your chronograms
+names(my_chronograms)
+
+# instal datelifeplot
+devtools::install_github("phylotastic/datelifeplot")
+
+# look at the first chronogram:
+my_chronograms[[1]]
+
+# check how many taxa we got ages for on the first chronogram:
+ape::Ntip(my_chronograms[[1]])
+# we got ages for for 91 species
+length(my_query$cleaned_names) - ape::Ntip(my_chronograms[[1]])
+# we do not have age data for 271 species
+
+# plot your study chronograms and save them as pdf
+datelifeplot::plot_phylo_all(chronograms = my_chronograms, write = "pdf")
+
+# Choose a tree topology to date
+biggest <- datelife::get_biggest_multiphylo(my_chronograms)
+opentree <- datelife::get_otol_synthetic_tree(input = my_query)
+
+# Add it to your my_query$phy
+
+my_query$phy <- opentree
+
+# Date the tree topology, you can use either of the following
+
+dated_opentree <- datelife::datelife_use_datelifequery(datelife_query = my_query)
+
+dated_opentree <- datelife::datelife_use(input = opentree)
+
+```

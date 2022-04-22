@@ -1,0 +1,61 @@
+---
+title: "datelife_class"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Resources:
+
+collaborative document: https://pad.carpentries.org/datelife 
+datelife documentation: http://phylotastic.org/datelife/index.html
+
+## Installing datelife
+
+```{r}
+devtools::install_github("phylotastic/datelife")
+```
+
+### Get a list of taxonomic names that you are interested on, it can/t be common names
+
+- We can get tip labels from a tree
+- We can create  a list of species or higher group names
+- to standardize to the taxonomy, we use `make_datelife_query`
+
+Case when we have a single taxon name
+```{r}
+my_group <- "fringillidae"
+```
+
+Case when we want names from a tree
+
+```{r}
+my_tree <- ape::read.tree(file = "data/krenek_etal_2013.tre")
+my_tree
+str(my_tree)
+my_tree$tip.label
+
+# get species names
+my_group <- my_tree$tip.label
+
+
+my_group <- gsub("'", "", my_group)
+
+my_group_list <- strsplit(my_group, split = " ")
+
+my_group <- sapply(my_group_list, function(x) paste0(x[1:2], collapse = "_"))  
+```
+
+```{r}
+my_query <- datelife::make_datelife_query(input = my_group)
+
+my_query <- datelife::make_datelife_query("mantodea", get_spp_from_taxon = TRUE)
+str(my_query)
+# check how many taxon names you got:
+length(my_query$cleaned_names)
+```
+
+
+
