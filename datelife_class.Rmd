@@ -1,5 +1,5 @@
 ---
-title: "datelife_class"
+title: "datelife class\n April 21, 2022"
 output: pdf_document
 ---
 
@@ -7,52 +7,90 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Resources:
+# Resources:
 
-collaborative document: https://pad.carpentries.org/datelife 
-datelife documentation: http://phylotastic.org/datelife/index.html
+- Collaborative document (the etherpad): [**pad.carpentries.org/datelife**](https://pad.carpentries.org/datelife).
+- DateLife documentation: [**phylotastic.org/datelife/index.html**](http://phylotastic.org/datelife/index.html).
 
-## Installing datelife
+# Install datelife
 
 ```{r}
 devtools::install_github("phylotastic/datelife")
 ```
 
-### Get a list of taxonomic names that you are interested on, it can/t be common names
+# Get a list of taxonomic names that you are interested on
 
-- We can get tip labels from a tree
-- We can create  a list of species or higher group names
-- to standardize to the taxonomy, we use `make_datelife_query`
+*Note*: it can't be common names (yet).
 
-Case when we have a single taxon name
+- We can create a list of species or more inclusive taxonomic group names.
+- We can get tip labels from a tree.
+
+## Case when you are interested in one (or more) inclusive taxonomic groups, such as genus, family, order, etc.
+
+DateLife will be able to get all species within the taxonomic group(s) you define here:
+
 ```{r}
-my_group <- "fringillidae"
+my_taxon <- "mantodea"
 ```
 
-Case when we want names from a tree
+## Case when we want taxon names from a tree
 
 ```{r}
+# read in your tree
+# if it is a nexus tree, use function ape::read.nexus()
 my_tree <- ape::read.tree(file = "data/krenek_etal_2013.tre")
 my_tree
 str(my_tree)
+
+# your taxon names will be in the tip.label part of the tree.
+# you can access them as follows:
+
 my_tree$tip.label
 
-# get species names
-my_group <- my_tree$tip.label
-
-
-my_group <- gsub("'", "", my_group)
-
-my_group_list <- strsplit(my_group, split = " ")
-
-my_group <- sapply(my_group_list, function(x) paste0(x[1:2], collapse = "_"))  
 ```
 
-```{r}
-my_query <- datelife::make_datelife_query(input = my_group)
+Our tip labels have some tags at the end that do not belong to the taxon names. We have to remove those, so we only keep the genus and species epithet:
 
-my_query <- datelife::make_datelife_query("mantodea", get_spp_from_taxon = TRUE)
+```{r}
+# extract your tip labels into an object of its own: 
+my_group <- my_tree$tip.label
+
+# remove the tilde, you will have to run this twice:
+my_group <- gsub("'", "", my_group)
+my_group <- gsub("'", "", my_group)
+
+# split your names by the blank space (or the underscore, if that is your case) 
+my_group_list <- strsplit(my_group, split = " ")
+
+# Save the first two elements of the split, and paste them with an underscore:
+elements_to_keep <- 1:2
+paste_with <- "_"
+
+my_group <- sapply(my_group_list, function(x) paste0(x[elements_to_keep], 
+                                                     collapse = paste_with))  
+
+# your names are now "clean" and ready to be processed by DateLife
+my_group
+```
+
+
+# Process your taxon names with datelife
+
+To perform the chronogram search in the DateLife database, we have to standardize our group of interest to the taxonomy.
+
+For this, we will use the `make_datelife_query` function:
+
+```{r}
+# when you have a list of species names, you can use all default arguments:
+my_query_group <- datelife::make_datelife_query(input = my_group)
+
+# when you have an inclusive taxon name, you have to set the argument "get_spp_from_taxon" to TRUE:
+
+my_query <- datelife::make_datelife_query(my_taxon, get_spp_from_taxon = TRUE)
+
+# look at the data you obtained by running datelife::make_datelife_query:
 str(my_query)
+
 # check how many taxon names you got:
 length(my_query$cleaned_names)
 ```
